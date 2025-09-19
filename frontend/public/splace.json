@@ -1,0 +1,367 @@
+{
+  "address": "5iemUKpH3dMUfxsvduPy5AMkeC8hAm7WGUXdAa958qTK",
+  "metadata": {
+    "name": "splace",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "initialize_canvas",
+      "discriminator": [
+        223,
+        91,
+        237,
+        137,
+        41,
+        27,
+        240,
+        59
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "canvas",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  65,
+                  78,
+                  86,
+                  65,
+                  83,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_tile",
+      "discriminator": [
+        201,
+        111,
+        164,
+        192,
+        89,
+        232,
+        157,
+        191
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "tile",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "x",
+          "type": "u8"
+        },
+        {
+          "name": "y",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "initialize_user_stats",
+      "discriminator": [
+        254,
+        243,
+        72,
+        98,
+        251,
+        130,
+        168,
+        213
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  85,
+                  83,
+                  69,
+                  82,
+                  95,
+                  83,
+                  84,
+                  65,
+                  84,
+                  83,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "paint",
+      "discriminator": [
+        43,
+        67,
+        254,
+        42,
+        131,
+        222,
+        81,
+        241
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "tile",
+          "writable": true
+        },
+        {
+          "name": "user_stats",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  85,
+                  83,
+                  69,
+                  82,
+                  95,
+                  83,
+                  84,
+                  65,
+                  84,
+                  83,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "x",
+          "type": "u8"
+        },
+        {
+          "name": "y",
+          "type": "u8"
+        },
+        {
+          "name": "color",
+          "type": "u8"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Canvas",
+      "discriminator": [
+        239,
+        248,
+        162,
+        140,
+        114,
+        179,
+        55,
+        66
+      ]
+    },
+    {
+      "name": "Tile",
+      "discriminator": [
+        95,
+        45,
+        214,
+        228,
+        61,
+        172,
+        201,
+        208
+      ]
+    },
+    {
+      "name": "UserStats",
+      "discriminator": [
+        176,
+        223,
+        136,
+        27,
+        122,
+        79,
+        32,
+        227
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Unauthorized"
+    },
+    {
+      "code": 6001,
+      "name": "OutOfBounds",
+      "msg": "Pixel out of bounds"
+    },
+    {
+      "code": 6002,
+      "name": "CooldownNotElapsed",
+      "msg": "Cooldown not elapsed"
+    },
+    {
+      "code": 6003,
+      "name": "ColorDoesNotExist",
+      "msg": "Color does not exist"
+    }
+  ],
+  "types": [
+    {
+      "name": "Canvas",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "width_in_tiles",
+            "type": "u8"
+          },
+          {
+            "name": "height_in_tiles",
+            "type": "u8"
+          },
+          {
+            "name": "tile_width_in_pixels",
+            "type": "u8"
+          },
+          {
+            "name": "tile_height_in_pixels",
+            "type": "u8"
+          },
+          {
+            "name": "cooldown_secs",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Tile",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "data",
+            "type": {
+              "array": [
+                "u8",
+                1024
+              ]
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserStats",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "last_paint_ts",
+            "type": "i64"
+          },
+          {
+            "name": "paints_total",
+            "type": "u32"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
