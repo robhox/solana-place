@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Solana Place",
-  description: "created by robhox",
+  title: "s/place — Shared canvas on Solana",
+  description: "A collaborative, on-chain pixel canvas powered by Solana.",
 };
 
 export default function RootLayout({

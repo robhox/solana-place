@@ -1,10 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Wallet } from "lucide-react";
+import { Check, Github, Loader2, MousePointer2, Wallet } from "lucide-react";
 import { Connection, ComputeBudgetProgram, Transaction } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import splaceIdl from "./../public/splace.json";
@@ -49,33 +46,6 @@ const TAILWIND_500 = [
 const WHITE = ["white"];
 
 type NamedColor = (typeof TAILWIND_500)[number] | (typeof WHITE)[number];
-
-const COLOR_CLASS: Record<NamedColor, string> = {
-  white: "bg-white border",
-  red: "bg-red-500",
-  orange: "bg-orange-500",
-  amber: "bg-amber-500",
-  yellow: "bg-yellow-500",
-  lime: "bg-lime-500",
-  green: "bg-green-500",
-  emerald: "bg-emerald-500",
-  teal: "bg-teal-500",
-  cyan: "bg-cyan-500",
-  sky: "bg-sky-500",
-  blue: "bg-blue-500",
-  indigo: "bg-indigo-500",
-  violet: "bg-violet-500",
-  purple: "bg-purple-500",
-  fuchsia: "bg-fuchsia-500",
-  pink: "bg-pink-500",
-  rose: "bg-rose-500",
-  slate: "bg-slate-500",
-  gray: "bg-gray-500",
-  zinc: "bg-zinc-500",
-  neutral: "bg-neutral-500",
-  stone: "bg-stone-500",
-};
-const colorToClass = (c: NamedColor) => COLOR_CLASS[c];
 
 export default function Page() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -200,6 +170,8 @@ export default function Page() {
   useEffect(() => {
     if (!walletConnected || isSigningTransaction) return;
     redraw();
+    // Hover redraws are intentionally isolated from connection-state changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hovered]);
 
   useEffect(() => {
@@ -212,12 +184,18 @@ export default function Page() {
     cvs.width = CANVAS_SIZE * RENDER_SCALE;
     cvs.height = CANVAS_SIZE * RENDER_SCALE;
     redraw();
+    // Canvas dimensions and the RPC connection are initialized once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onCanvasMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) / RENDER_SCALE);
-    const y = Math.floor((e.clientY - rect.top) / RENDER_SCALE);
+    const x = Math.floor(
+      ((e.clientX - rect.left) / rect.width) * CANVAS_SIZE,
+    );
+    const y = Math.floor(
+      ((e.clientY - rect.top) / rect.height) * CANVAS_SIZE,
+    );
     if (x < 0 || y < 0 || x >= CANVAS_SIZE || y >= CANVAS_SIZE) {
       setHovered(null);
     } else {
@@ -237,7 +215,7 @@ export default function Page() {
     let info;
     try {
       info = await connection?.getAccountInfo(tilePda);
-    } catch (e) {
+    } catch {
       toast.error("Error loading tile");
       return;
     }
@@ -281,6 +259,8 @@ export default function Page() {
     if (!connection || walletConnected) return;
     console.log("useEffect");
     syncAllTiles();
+    // Only a new RPC connection should trigger a full initial tile sync.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connection]);
 
   const paintAt = async (pixelX: number, pixelY: number, color: NamedColor) => {
@@ -382,9 +362,16 @@ export default function Page() {
     if (!walletConnected || isSigningTransaction) return;
     setIsSigningTransaction(true);
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) / RENDER_SCALE);
-    const y = Math.floor((e.clientY - rect.top) / RENDER_SCALE);
-    if (x < 0 || y < 0 || x >= CANVAS_SIZE || y >= CANVAS_SIZE) return;
+    const x = Math.floor(
+      ((e.clientX - rect.left) / rect.width) * CANVAS_SIZE,
+    );
+    const y = Math.floor(
+      ((e.clientY - rect.top) / rect.height) * CANVAS_SIZE,
+    );
+    if (x < 0 || y < 0 || x >= CANVAS_SIZE || y >= CANVAS_SIZE) {
+      setIsSigningTransaction(false);
+      return;
+    }
 
     const idx = y * CANVAS_SIZE + x;
     const previousColor = framebuffer.current[idx];
@@ -433,111 +420,176 @@ export default function Page() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-6 py-4">
-      <div className="w-full flex items-center gap-2 max-w-6xl mx-auto mb-2">
-        <h1 className="text-2xl font-extrabold">Welcome to s/place</h1>
-        <Badge className="mt-1" variant="secondary">
-          devnet
-        </Badge>
-      </div>
-      <div className="mx-auto max-w-6xl grid md:grid-cols-[auto_240px] gap-6">
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              Canvas (4 tiles)
-              <Badge variant="secondary">
-                {CANVAS_SIZE}×{CANVAS_SIZE}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-6">
-            {!walletConnected && (
-              <div className="flex flex-col items-center justify-center">
-                <Button
-                  onClick={connectWallet}
-                  className="w-full flex items-center gap-2"
-                >
-                  <Wallet className="h-4 w-4" /> Connect wallet
-                </Button>
-                <p className="text-sm text-center mt-2">
-                  Connect your wallet to start drawing on the canvas.
-                </p>
-              </div>
-            )}
-            {isSyncing && (
-              <div className="flex items-center justify-center">
-                <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                Loading canvas...
-              </div>
-            )}
-            {isSigningTransaction && (
-              <div className="flex items-center justify-center">
-                <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                Waiting for transaction to be signed...
-              </div>
-            )}
+  const activityLabel = isSigningTransaction
+    ? "Confirm in wallet"
+    : isSyncing
+      ? "Syncing canvas"
+      : "Canvas up to date";
 
-            <div className="relative inline-block mx-auto rounded overflow-hidden border">
+  return (
+    <main className="app-shell">
+      <div className="ambient-grid" aria-hidden="true" />
+
+      <header className="topbar">
+        <a className="brand" href="#" aria-label="s/place home">
+          <span className="brand-mark" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+          </span>
+          <span className="brand-word">
+            s<span>/</span>place
+          </span>
+        </a>
+
+        <div className="topbar-actions">
+          <div className="network-chip" title="Solana development network">
+            <span className="network-dot" />
+            Devnet
+          </div>
+          {walletConnected ? (
+            <div className="wallet-connected">
+              <span className="wallet-dot" />
+              Wallet connected
+            </div>
+          ) : (
+            <button className="wallet-button" onClick={connectWallet}>
+              <Wallet aria-hidden="true" />
+              Connect wallet
+            </button>
+          )}
+        </div>
+      </header>
+
+      <section className="workspace" aria-label="Shared pixel studio">
+        <div className="canvas-zone">
+          <div className="workspace-heading">
+            <div>
+              <p className="eyebrow">Shared canvas · 4 on-chain tiles</p>
+              <h1>Make your mark.</h1>
+            </div>
+            <div className="canvas-meta">
+              <span>{CANVAS_SIZE} × {CANVAS_SIZE} px</span>
+              <span className="meta-separator" />
+              <span>
+                {hovered ? `${hovered.x}, ${hovered.y}` : "x, y"}
+              </span>
+            </div>
+          </div>
+
+          <div className="canvas-stage">
+            <div className="canvas-status" aria-live="polite">
+              {(isSigningTransaction || isSyncing) && (
+                <Loader2 className="status-spinner" aria-hidden="true" />
+              )}
+              <span>{activityLabel}</span>
+            </div>
+
+            <div
+              className={`canvas-frame ${walletConnected ? "is-ready" : "is-locked"}`}
+            >
+              <span className="corner corner-tl" aria-hidden="true" />
+              <span className="corner corner-tr" aria-hidden="true" />
+              <span className="corner corner-bl" aria-hidden="true" />
+              <span className="corner corner-br" aria-hidden="true" />
               <canvas
                 ref={canvasRef}
                 onClick={onCanvasClick}
                 onMouseMove={onCanvasMove}
                 onMouseLeave={() => setHovered(null)}
-                className="cursor-crosshair block"
+                className="pixel-canvas"
                 aria-label="Pixel canvas"
               />
-              <div className="pointer-events-none absolute inset-0">
-                {[0, 1].map((ty) =>
-                  [0, 1].map((tx) => (
-                    <div
-                      key={`${tx}-${ty}`}
-                      className="absolute text-[10px] opacity-70 bg-white/60 px-1 rounded"
-                      style={{
-                        left: tx * TILE_SIZE * RENDER_SCALE + 4,
-                        top: ty * TILE_SIZE * RENDER_SCALE + 4,
-                      }}
-                    >
-                      tile ({tx},{ty})
-                    </div>
-                  )),
-                )}
-              </div>
+              {!walletConnected && (
+                <div className="canvas-lock">
+                  <div className="lock-icon" aria-hidden="true">
+                    <MousePointer2 />
+                  </div>
+                  <strong>Ready when you are</strong>
+                  <span>Connect a wallet to place a pixel.</span>
+                  <button onClick={connectWallet}>Connect wallet</button>
+                </div>
+              )}
             </div>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle>Color Picker</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-1">
-                {["white", ...TAILWIND_500].map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setSelected(c as NamedColor)}
-                    className={`h-7 rounded-md border border-gray-100/90 focus:outline-none focus:ring-2 focus:ring-offset-2 ${colorToClass(c as NamedColor)} ${
-                      selected === c ? "ring-2 ring-offset-2" : ""
-                    }`}
-                    title={c}
-                    aria-label={`Color ${c}`}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         </div>
-      </div>
-      <div className="flex justify-center mt-4 text-sm font-medium text-gray-400">
-        <p>
-          Created by{" "}
-          <a href="https://github.com/robhox" target="_blank">
-            robhox
-          </a>
-        </p>
-      </div>
-    </div>
+
+        <aside className="tool-rail" aria-label="Painting tools">
+          <div className="rail-section palette-section">
+            <div className="section-heading">
+              <div>
+                <p className="section-index">01</p>
+                <h2>Choose a color</h2>
+              </div>
+              <span
+                className="selected-color-preview"
+                style={{ backgroundColor: cssColors[colorIndex(selected)] }}
+                aria-hidden="true"
+              />
+            </div>
+
+            <div className="color-grid" role="group" aria-label="Color palette">
+              {palette.map((color) => {
+                const isSelected = selected === color;
+                return (
+                  <button
+                    key={color}
+                    onClick={() => setSelected(color)}
+                    className={`color-swatch ${isSelected ? "is-selected" : ""}`}
+                    style={{ backgroundColor: cssColors[colorIndex(color)] }}
+                    title={color}
+                    aria-label={`Color ${color}`}
+                    aria-pressed={isSelected}
+                  >
+                    {isSelected && <Check aria-hidden="true" />}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="selected-color-label">
+              <span>Selected</span>
+              <strong>{selected}</strong>
+              <code>#{ONCHAIN_COLOR_INDEX[selected].toString().padStart(2, "0")}</code>
+            </div>
+          </div>
+
+          <div className="rail-section steps-section">
+            <p className="section-index">02</p>
+            <h2>Place a pixel</h2>
+            <ol className="steps-list">
+              <li>
+                <span>1</span>
+                Pick a color
+              </li>
+              <li>
+                <span>2</span>
+                Click any pixel
+              </li>
+              <li>
+                <span>3</span>
+                Confirm on Solana
+              </li>
+            </ol>
+            <p className="rail-note">
+              Every contribution is permanent and shared with everyone.
+            </p>
+          </div>
+        </aside>
+      </section>
+
+      <footer className="footer">
+        <p>One canvas. Thousands of decisions. Stored on Solana.</p>
+        <a
+          href="https://github.com/robhox"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <Github aria-hidden="true" />
+          Built by robhox
+        </a>
+      </footer>
+    </main>
   );
 }
